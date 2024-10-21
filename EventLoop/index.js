@@ -4,7 +4,7 @@
     // 异步任务1
     setTimeout(() => {
         // macrotask 1
-        console.log('宏任务 1'); // 5
+        console.log('宏任务 1'); // 6
         Promise.resolve().then(() => {
             // microtask 1.1
             console.log('微任务 1.1'); // 7
@@ -23,7 +23,7 @@
             console.log('同步任务 inside new Promise'); // 4
         }).then(() => {
             // microtask 1.2
-            console.log('微任务 1.2'); // 6
+            console.log('微任务 1.2'); // 5
         });
     });
 
