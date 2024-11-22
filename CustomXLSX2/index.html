@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Excel Image Insertion with JavaScript</title>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+    <script src="./index.js"></script>
+</head>
+
+<body>
+    <button onclick="generateExcelWithImages()">生成带图片的Excel</button>
+
+    <script>
+
+
+
+        async function generateExcelWithImages() {
+            // 创建 Excel Workbook 和 Worksheet
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Sheet1');
+
+            const qrcode = new QRCode(null, {
+                text: '',
+                width: 1280,
+                height: 1280,
+            });
+
+            function base64ToBlob(base64String, mimeType) {
+                // 去掉 Base64 的前缀（如 "data:image/png;base64,"）
+                const byteCharacters = atob(base64String.split(',')[1]);
+
+                // 创建字节数组
+                const byteArrays = [];
+                for (let i = 0; i < byteCharacters.length; i += 512) {
+                    const slice = byteCharacters.slice(i, i + 512);
+
+                    const byteNumbers = new Array(slice.length);
+                    for (let j = 0; j < slice.length; j++) {
+                        byteNumbers[j] = slice.charCodeAt(j);
+                    }
+
+                    const byteArray = new Uint8Array(byteNumbers);
+                    byteArrays.push(byteArray);
+                }
+
+                // 创建 Blob 对象
+                return new Blob(byteArrays, { type: mimeType });
+            }
+
+            // 示例使用
+            // const base64ImgString = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA...'; // 替换为实际 Base64 字符串
+            // const imageData = base64ToBlob(base64ImgString, 'image/png');
+            // console.log(imageData); // 输出 Blob 对象
+
+            // const qrTargetUrl = 'http://s.domain.com/w/rRnPRWgd4';
+            // const qrcodeImage = qrcode.makeCode(qrTargetUrl, true);
+            // const imageData = base64ToBlob(qrcodeImage, 'image/png');
+            // const arrayBuffer = await imageData.arrayBuffer();
+
+            // // 将图片添加到工作簿并返回图片ID
+            // const imageId = workbook.addImage({
+            //     buffer: arrayBuffer,
+            //     extension: 'jpeg' // 或者根据图片实际类型修改为 'png'
+            // });
+            console.time('生成二维码')
+            // 将图片插入到 Excel 的 A 列中的多行单元格
+            for (let row = 1; row <= 300; row++) { // 假设插入到 A1 到 A10
+                const qrTargetUrl = 'http://s.domain.com/w/rRnPRWgd4';
+                const qrcodeImage = qrcode.makeCode(qrTargetUrl, true);
+                const imageData = base64ToBlob(qrcodeImage, 'image/png');
+                const arrayBuffer = await imageData.arrayBuffer();
+                // 将图片添加到工作簿并返回图片ID
+                const imageId = workbook.addImage({
+                    buffer: arrayBuffer,
+                    extension: 'jpeg' // 或者根据图片实际类型修改为 'png'
+                });
+                worksheet.getRow(row).height = 80; // 调整行高以适应图片大小
+                worksheet.addImage(imageId, {
+                    tl: { col: 0, row: row - 1 }, // 起始位置（A列从0开始）
+                    ext: { width: 80, height: 80 } // 设置图片宽高
+                });
+            }
+
+            console.timeEnd('生成二维码')
+
+            // 导出为 Excel 文件
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = '带图片的Excel.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+
+</html>
